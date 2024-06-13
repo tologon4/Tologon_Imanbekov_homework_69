@@ -32,17 +32,29 @@
                     </li>
                     @if (User.Identity.IsAuthenticated)
                     {
+                        @if (User.IsInRole("admin"))
+                        {
+                            <li class="nav-item ms-auto">
+                                <a class="btn btn-light border-1 border-primary rounded-3 text-primary" asp-action="Register" asp-controller="Account">Создать пользователя</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("manager") || User.IsInRole("admin"))
+                        {
+                            <li class="nav-item ms-auto">
+                                <a class="btn btn-light border-1 border-primary rounded-3 text-primary" asp-action="Register" asp-controller="Account">Создать заведение</a>
+                            </li>
+                        }
                         <li class="nav-item ms-auto">
-                            <span class="order-1">
-                                <form method="post" asp-controller="Account" asp-action="LogOut"><input type="submit" value="Выход" class="btn btn-light border-1 border-primary rounded-3 order-1 text-primary"/></form></span>
+                            <form method="post" asp-controller="Account" asp-action="LogOut"><input type="submit" value="Выход" class="btn btn-light border-1 border-primary rounded-3 order-1 text-primary"/></form>
                         </li>
-                        <li class="nav-item">
-                            <a class="order-2 ms-3" asp-action="Profile" asp-controller="Account" asp-route-id=""><i class="bi bi-person-circle fs-3"></i></a>
+                        <li class="nav-item me-3">
+                            <a class=" ms-3" asp-action="Profile" asp-controller="Account" asp-route-id=""><i class="bi bi-person-circle fs-3"></i></a>
                         </li>
+                        
                     }
                     else
                     {
-                        <li class="nav-item ms-auto">
+                        <li class="nav-item ms-auto me-3">
                             <a class="btn btn-light border-1 border-primary rounded-3 order-1 text-primary" asp-action="Login" asp-controller="Account"> Войти </a>
                         </li>
                     }

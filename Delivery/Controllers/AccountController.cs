@@ -11,7 +11,6 @@ public class AccountController : Controller
     private DeliveryDb _db;
     private UserManager<User> _userManager;
     private SignInManager<User> _signInManager;
-    private IHttpContextAccessor _httpContextAccessor;
     private IWebHostEnvironment _environment;
 
 
@@ -23,14 +22,12 @@ public class AccountController : Controller
         _userManager = userManager;
         _signInManager = signInManager;
         _environment = environment;
-        _httpContextAccessor = httpContextAccessor;
     }
 
 
     [Authorize]
     public async Task<IActionResult> Profile(int? id)
     {
-        var referrer = _httpContextAccessor.HttpContext.Request.Headers["Referer"].ToString();
         User user = new User();
         if (!id.HasValue)
             user = await _db.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(_userManager.GetUserId(User)));
@@ -42,9 +39,12 @@ public class AccountController : Controller
             var adminUser =await _userManager.IsInRoleAsync(currentUser, "admin");
             var isOwner = currentUser.Id == user.Id;
             ViewBag.EditAccess = adminUser || isOwner;
+            ViewBag.DeleteAccess = adminUser;
+            ViewBag.IsAdmin = adminUser && isOwner;
+            ViewBag.RoleIdent = await _userManager.IsInRoleAsync(user, "user");
             return View(user);
         }
-        return Redirect(referrer);
+        return NotFound();
     }
 
     public async Task<IActionResult> Edit(User model, IFormFile? uploadedFile, int userId, string? password)
@@ -81,14 +81,32 @@ public class AccountController : Controller
     }
     
     
-    public IActionResult Register()
+    public async Task<IActionResult> Register()
     {
+        ViewBag.Roles = new string[] { "manager", "user"};
+        User? currentUser = await _userManager.GetUserAsync(User);
+        bool isAdmin = false;
+        if (currentUser != null)
+            isAdmin = await _userManager.IsInRoleAsync(currentUser, "admin");
+        if (isAdmin)
+        {
+            ViewData["FormName"] = "Создание нового пользователя";
+            ViewData["ButtonName"] = "Создать";
+            ViewBag.IsAdmin = isAdmin;
+        }
+        else
+        {
+            ViewData["FormName"] = "Регистрация";
+            ViewData["ButtonName"] = "Зарегистрироваться";
+            ViewBag.IsAdmin = isAdmin;
+        }
         return View();
     }
 
     [HttpPost]
-    public async Task<IActionResult> Register(RegisterViewModel model, IFormFile? uploadedFile)
+    public async Task<IActionResult> Register(RegisterViewModel model, IFormFile? uploadedFile, string? role)
     {
+        ViewBag.Roles = new string[] { "manager", "user"};
         if (ModelState.IsValid)
         {
             string path = "/userImages/defProf-ProfileN=1.png";
@@ -111,9 +129,21 @@ public class AccountController : Controller
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user,"user");
-                await _signInManager.SignInAsync(user, false);
-                return RedirectToAction("Index", "Home");
+                User? currentUser = await _userManager.GetUserAsync(User);
+                bool isAdmin = false;
+                if (currentUser != null)
+                    isAdmin = await _userManager.IsInRoleAsync(currentUser, "admin");
+                if (isAdmin)
+                {
+                    await _userManager.AddToRoleAsync(user, role);
+                    return RedirectToAction("Profile", "Account", new {id = user.Id});
+                }
+                else
+                {
+                    await _userManager.AddToRoleAsync(user,"user");
+                    await _signInManager.SignInAsync(user, false);
+                    return RedirectToAction("Index", "Home");
+                }
             }
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);

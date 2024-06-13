@@ -5,7 +5,7 @@
     Layout = "_Layout";
 }
 
-<div class="row g-0 pt-5">
+<div class="row g-0 pt-5" id="profile">
     <div class="col-md-4 pb-5 text-center border-bottom">
         <img src="@Model.Avatar" id="profileAvatar" width="200" height="200" class="rounded-circle mx-auto ">
     </div>
@@ -15,7 +15,21 @@
                 <div class=" col col-3"><h5 id="profileEmail">@Model.Email</h5></div>
                 @if (ViewBag.EditAccess)
                 {
-                    <div class="col col-4 d-flex ms-4"><span class="my-auto btn btn-light me-auto" id="edit" role="button">Редактировать</span></div>
+                    <div class="col col-3 d-flex ms-4">
+                        <span class="my-auto btn btn-light me-auto" id="edit" role="button">Редактировать</span>
+                    </div>
+                }
+                @if (ViewBag.DeleteAccess)
+                {
+                    @if (!ViewBag.IsAdmin)
+                    {
+                        <div class="col col-3 d-flex">
+                            <span class="my-auto btn btn-light me-auto text-danger" id="deleteUser" role="button">Удалить</span>
+                        </div>
+                        <div class="col col-3 d-flex">
+                            <span class="my-auto btn btn-light me-auto text-primary" id="makeRole" role="button"></span>
+                        </div>
+                    }
                 }
                 <div class="col col-12 mt-4">UserName: &nbsp;<h5 id="profileUserName">@Model.UserName</h5></div>
                 <div class="col col-12 mt-4">Phone number: &nbsp;<h5 id="profilePhone">@Model.PhoneNumber</h5></div>
@@ -99,7 +113,7 @@
                 contentType: 'application/json;charset=utf-8',
                 dataType: 'json',
                 data: { 'value': valueEmail, 'id': @Model.Id },
-                success: function (result) {
+                success: function(result) {
                     if (!result) {
                         $('#errorTakenEmail').text(valueEmail + ' уже занят!');
                         email.setCustomValidity(valueEmail + ' уже занят!');
@@ -108,30 +122,39 @@
                         email.setCustomValidity('');
                     }
                 }
-            });                
+            });
         }
-        function checkUserName(){
-                    let valueUserName = $('#userName').val();
-                    let userName = document.querySelector('input[id=userName]');
-                        $.ajax({
-                        type: 'GET',
-                        url: '@Url.Action("EditCheckUsernameEmail", "Validation")',
-                                                contentType: 'application/json;charset=utf-8',
-                                                dataType: 'json',
-                                                data: { 'value': valueUserName, 'id': @Model.Id },
-                                                success: function (result) {
-                                                    if (!result) {
-                                                        $('#errorTakenUserName').text(valueUserName + ' уже занят!');
-                                                        userName.setCustomValidity(valueUserName + ' уже занят!');
-                                                    } else {
-                                                        $('#errorTakenUserName').text('');
-                                                        userName.setCustomValidity('');
-                                                    }
-                                                }
-                                            });
-                                           
+    
+        function checkUserName() {
+            let valueUserName = $('#userName').val();
+            let userName = document.querySelector('input[id=userName]');
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("EditCheckUsernameEmail", "Validation")',
+                contentType: 'application/json;charset=utf-8',
+                dataType: 'json',
+                data: { 'value': valueUserName, 'id': @Model.Id },
+                success: function(result) {
+                    if (!result) {
+                        $('#errorTakenUserName').text(valueUserName + ' уже занят!');
+                        userName.setCustomValidity(valueUserName + ' уже занят!');
+                    } else {
+                        $('#errorTakenUserName').text('');
+                        userName.setCustomValidity('');
+                    }
+                }
+            });
         }
-               
+    
+        function roleIdentButton(identVal){
+                    if (identVal==='user'){
+                        $('#makeRole').text('Сделать менеджером');
+                    }
+                    else{
+                        $('#makeRole').text('Сделать пользователем');
+                    }
+                }
+        
         function onChange() {
             let password = document.querySelector('input[name=password]');
             let confirm = document.querySelector('input[name=confirm]');
@@ -141,44 +164,84 @@
                 confirm.setCustomValidity('Passwords do not match');
             }
         }
-        
-        $().ready(function (){
-            onChange();
-            $('#edit').click(function (e){
+    
+        $(document).ready(function() {
+            let role;
+            if ('@ViewBag.RoleIdent' ===true){
+                role = 'user';
+            }else{
+                role = 'manager';
+            }
+            roleIdentButton(role);
+            $('#deleteUser').click(function(e) {
+                e.preventDefault();
+                let userId = @Model.Id;
+                let deleteConfirm = confirm('Вы уверены что хотите удалить пользователя ' + '@Model.Email' + ' ?');
+                if (deleteConfirm) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteUser", "Admin")',
+                        type: 'POST',
+                        data: { 'id': userId },
+                        success: function(response) {
+                            if (response) {
+                                $('#profile').empty().html(`
+                                    <h4 class="text-danger"> Пользователь ${ '@Model.Email' } был удален!</h4>
+                                `);
+                            } else {
+                                alert('Произошла ошибка при удалении пользователя!');
+                            }
+                        }
+                    });
+                }
+            });
+            $('#makeRole').click(function(e) {
+                            e.preventDefault();
+                            let userId = @Model.Id;
+                                $.ajax({
+                                    url: '@Url.Action("MakeRole", "Admin")',
+                                    type: 'POST',
+                                    data: { 'id': userId },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            roleIdentButton(response.role);
+                                        } else {
+                                            alert('Произошла ошибка при попытке выдать право менеджера пользователю!');
+                                        }
+                                    }
+                                });
+                        });
+            
+    
+            $('#edit').click(function(e) {
                 e.preventDefault();
                 $('#editModal').modal('show');
             });
-            
-             $('#editForm').submit(function(event) {
-                                event.preventDefault();
-                                
-                                 let form = $('#editForm')[0]; 
-                                 let formData = new FormData(form);          
-                                $.ajax({
-                                url:'@Url.Action("Edit", "Account")',
-                                type:'POST',
-                                data: formData,
-                                processData: false,  
-                                contentType: false,
-                                success: function (response){
-                                    if (response){
-                                         $('#profileEmail').text(response.email);
-                                         $('#profileUserName').text(response.userName);
-                                         $('#profilePhone').text(response.phoneNumber);
-                                         $('#profileAvatar').attr('src', response.avatar);
-                                    }
-                                    else{
-                                    alert('Ошибка:' + response.message);    
-                                    }
-                                },
-                                error:function() {
-                                    alert('Произошла ошибка при отправке данных');
-                                }
-                                });
-                                
-                              });
-             
-            
+    
+            $('#editForm').submit(function(event) {
+                event.preventDefault();
+                let form = $('#editForm')[0];
+                let formData = new FormData(form);
+                $.ajax({
+                    url: '@Url.Action("Edit", "Account")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response) {
+                            $('#profileEmail').text(response.email);
+                            $('#profileUserName').text(response.userName);
+                            $('#profilePhone').text(response.phoneNumber);
+                            $('#profileAvatar').attr('src', response.avatar);
+                        } else {
+                            alert('Ошибка: при редактировании профиля');
+                        }
+                    },
+                    error: function() {
+                        alert('Произошла ошибка при отправке данных');
+                    }
+                });
+            });
         });
     </script>
 }
