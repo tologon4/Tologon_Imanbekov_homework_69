@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -7,8 +9,11 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/Delivery.styles.css" asp-append-version="true"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
+@inject UserManager<User> userManager;
+@inject SignInManager<User> signInManager;
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
@@ -25,6 +30,22 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item ms-auto">
+                            <span class="order-1">
+                                <form method="post" asp-controller="Account" asp-action="LogOut"><input type="submit" value="Выход" class="btn btn-light border-1 border-primary rounded-3 order-1 text-primary"/></form></span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="order-2 ms-3" asp-action="Profile" asp-controller="Account" asp-route-id=""><i class="bi bi-person-circle fs-3"></i></a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item ms-auto">
+                            <a class="btn btn-light border-1 border-primary rounded-3 order-1 text-primary" asp-action="Login" asp-controller="Account"> Войти </a>
+                        </li>
+                    }
                 </ul>
             </div>
         </div>
@@ -46,4 +67,7 @@
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
+@functions
+{
+}
 </html>

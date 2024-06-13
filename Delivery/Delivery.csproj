@@ -15,4 +15,13 @@
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="Models\RegisterViewModel.cs">
+        <DependentUpon>User.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Models\LoginViewModel.cs">
+        <DependentUpon>User.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

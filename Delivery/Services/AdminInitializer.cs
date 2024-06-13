@@ -17,7 +17,7 @@ public class AdminInitializer
                 await _roleManager.CreateAsync(new IdentityRole<int>(role));
         if (await _userManager.FindByNameAsync(adminEmail) == null)
         {
-            User admin = new User() { Email = adminEmail, UserName = "adminUser" };
+            User admin = new User() { Email = adminEmail, UserName = "adminUser", Avatar = "/userImages/defProf-ProfileN=1.jpg"};
             IdentityResult result = await _userManager.CreateAsync(admin, adminPassword);
             if (result.Succeeded)
                 await _userManager.AddToRoleAsync(admin, "admin");
