@@ -1,0 +1,144 @@
+@model Dish
+
+@{
+    ViewBag.Title = "title";
+    Layout = "_Layout";
+}
+
+<div class="row g-0 pt-5" id="profile">
+    <div class="col-md-4 pb-5 text-center border-bottom">
+        <img src="@Model.Avatar" id="profileAvatar" width="200" height="200" class="rounded-circle mx-auto ">
+    </div>
+    <div class="col-md-8 border-bottom">
+        <div class="card-body">
+            <div class="row">
+                <div class=" col col-3"><h5 id="profileName">@Model.Name</h5></div>
+                @if (ViewBag.EditDeleteAccess)
+                {
+                    <div class="col col-3 d-flex ms-4">
+                        <span class="my-auto btn btn-light me-auto" id="edit" role="button">Редактировать</span>
+                    </div>
+                    <div class="col col-3 d-flex ms-4">
+                        <a asp-action="CreateDish" asp-route-eateryId="@Model.Id" class="my-auto btn btn-light text-success me-auto" id="edit" role="button">Создаь блюдо</a>
+                    </div>
+                    <div class="col col-3 d-flex">
+                        <span class="my-auto btn btn-light me-auto text-danger" id="deleteEatery" role="button">Удалить</span>
+                    </div>
+                }
+                <div class="col col-12 mt-4">Описание блюда: &nbsp;<h5 id="profileDescription">@Model.Description</h5></div>
+                <div class="col col-12 mt-4">Цена блюда: &nbsp;<h5 id="profilePrice">@Model.Price</h5></div>
+                <div class="col col-12 mt-4">Название заведения: &nbsp;<h5 id="profileEatery">@Model.Eatery.Name</h5></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактирование блюда</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="EditDish" id="editForm" asp-controller="Eatery" asp-anti-forgery="true"  enctype="multipart/form-data" >
+                <div class="modal-body">
+                    <div class="validation text-danger" asp-validation-summary="ModelOnly"></div>
+                    <div class="input-group mt-4">
+                        <label for="name"><span class="text-danger" asp-validation-for="Name"></span></label>
+                        <div class="input-group">
+                            <input asp-for="Name" type="text" class="form-control" placeholder="Name" id="name" required="required">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group mt-4">
+                        <label for="description"><span class="text-danger" asp-validation-for="Description"></span></label>
+                        <div class="input-group">
+                            <textarea class="form-control h-100" asp-for="Description" placeholder="Description" id="description" type="text" rows="4" required="required"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group mt-4">
+                        <label for="price"><span class="text-danger" asp-validation-for="Price"></span></label>
+                        <div class="input-group">
+                            <input asp-for="Price" type="text" class="form-control" placeholder="Price" id="price" required="required">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="file">Выберите фото блюда</label>
+                        <input id="file" type="file" name="uploadedFile" class="form-control" >
+                    </div>
+                    <input type="hidden" value="@Model.Id" name="dishId"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Редактировать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+       
+    
+        $(document).ready(function() {
+                      
+            $('#deleteEatery').click(function(e) {
+                            e.preventDefault();
+                            let dishId = @Model.Id;
+                            let deleteConfirm = confirm('Вы уверены что хотите удалить блюдо ' + '@Model.Name' + ' ?');
+                            if (deleteConfirm) {
+                                $.ajax({
+                                    url: '@Url.Action("DeleteDish", "Eatery")',
+                                    type: 'POST',
+                                    data: { 'id': dishId },
+                                    success: function(response) {
+                                        if (response) {
+                                            $('#profile').empty().html(`
+                                                <h4 class="text-danger"> Блюдо ${ '@Model.Name' } было удалено!</h4>
+                                            `);
+                                        } else {
+                                            alert('Произошла ошибка при удалении блюда!');
+                                        }
+                                    }
+                                });
+                            }
+                        });
+            
+            
+            $('#edit').click(function(e) {
+                e.preventDefault();
+                $('#editModal').modal('show');
+            });
+    
+            $('#editForm').submit(function(event) {
+                event.preventDefault();
+                let form = $('#editForm')[0];
+                let formData = new FormData(form);
+                $.ajax({
+                    url: '@Url.Action("EditDish", "Eatery")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response) {
+                            $('#profileName').text(response.name);
+                            $('#profileDescription').text(response.description);
+                            $('#profilePrice').text(response.price);
+                            $('#profileAvatar').attr('src', response.avatar);
+                        } else {
+                            alert('Ошибка: при редактировании блюда');
+                        }
+                    },
+                    error: function() {
+                        alert('Произошла ошибка при отправке данных');
+                    }
+                });
+            });
+        });
+    </script>
+}

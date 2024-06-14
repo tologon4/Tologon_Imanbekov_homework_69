@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Delivery.Controllers;
 
-[Authorize(Roles = "admin")]
+[Authorize(Roles = "admin,manager")]
 [Authorize]
 public class AdminController : Controller
 {
@@ -26,6 +26,38 @@ public class AdminController : Controller
     }
 
 
+    [Authorize]
+    [Authorize(Roles = "admin,manager")]
+    [HttpGet]
+    public async Task<IActionResult> CreateEatery()
+    {
+        return View();
+    }
+    
+    [Authorize]
+    [Authorize(Roles = "admin,manager")]
+    [HttpPost]
+    public async Task<IActionResult> CreateEatery(Eatery model, IFormFile uploadedFile)
+    {
+        if (ModelState.IsValid)
+        {
+            string newFileName = Path.ChangeExtension($"{model.Name.Trim()}-EateryN=1", Path.GetExtension(uploadedFile.FileName));
+            string path= $"/userImages/" + newFileName.Trim();
+            using (var fileStream = new FileStream(_environment.WebRootPath + path, FileMode.Create))
+            {
+                await uploadedFile.CopyToAsync(fileStream);
+            }
+            model.Avatar = path;
+            _db.Eateries.Add(model);
+            int n = await _db.SaveChangesAsync();
+            if (n > 0)
+                return RedirectToAction("Details", "Eatery", new {id = model.Id});
+        }
+        ModelState.AddModelError("", "Произошла ошибка при создании заведения!");
+        return View(model);
+    }
+    
+    
     [Authorize]
     [Authorize(Roles = "admin")]
     [HttpPost]

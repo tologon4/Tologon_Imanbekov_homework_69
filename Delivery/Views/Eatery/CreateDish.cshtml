@@ -1,0 +1,56 @@
+@model Dish
+
+@{
+    ViewBag.Title = "title";
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <div class="row row-cols-1 mt-5">
+        <div class="col col-6 mx-auto">
+            <div class="row row-cols-2">
+                <div class="col col-10 bg-white mx-auto text-center">
+                    <div class="row">
+                        <div class="col col-12 border border-1 py-4 px-5">
+                            <h5> Создание блюда </h5>
+                            <form asp-action="CreateDish" asp-controller="Eatery" enctype="multipart/form-data" asp-anti-forgery="true">
+                                <div class="validation text-danger" asp-validation-summary="ModelOnly"></div>
+                                <div class="input-group mt-4">
+                                    <label for="name"><span class="text-danger" asp-validation-for="Name"></span></label>
+                                    <div class="input-group">
+                                        <input asp-for="Name" type="text" class="form-control" placeholder="Name" id="name">
+                                    </div>
+                                </div>
+                                <div class="input-group mt-4">
+                                    <label for="description"><span class="text-danger" asp-validation-for="Description"></span></label>
+                                    <div class="input-group">
+                                        <textarea class="form-control h-100" asp-for="Description" placeholder="Description" id="description" type="text" rows="4"></textarea>
+                                    </div>
+                                </div>
+                                <div class="input-group mt-4">
+                                    <label for="price"><span class="text-danger" asp-validation-for="Price"></span></label>
+                                    <div class="input-group">
+                                        <input asp-for="Price" type="text" class="form-control" placeholder="Price" id="price">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="file">Выберите фото блюда</label>
+                                    <input id="file" type="file" name="uploadedFile" class="form-control" required="required">
+                                </div>
+                                <input type="hidden" value="@ViewBag.EateryId" asp-for="EateryId"/>
+                                <button type="submit" class="btn btn-primary rounded-2 w-100 mt-4">Создать блюдо</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,184 @@
+@model Eatery
+
+@{
+    ViewBag.Title = "title";
+    Layout = "_Layout";
+}
+
+<div class="row g-0 pt-5" id="profile">
+    <div class="col-md-4 pb-5 text-center border-bottom">
+        <img src="@Model.Avatar" id="profileAvatar" width="200" height="200" class="rounded-circle mx-auto ">
+    </div>
+    <div class="col-md-8 border-bottom">
+        <div class="card-body">
+            <div class="row">
+                <div class=" col col-3"><h5 id="profileName">@Model.Name</h5></div>
+                @if (ViewBag.EditDeleteAccess)
+                {
+                    <div class="col col-3 d-flex ms-4">
+                        <span class="my-auto btn btn-light me-auto" id="edit" role="button">Редактировать</span>
+                    </div>
+                    <div class="col col-3 d-flex ms-4">
+                        <a asp-action="CreateDish" asp-route-eateryId="@Model.Id" class="my-auto btn btn-light text-success me-auto" id="edit" role="button">Создаь блюдо</a>
+                    </div>
+                    <div class="col col-3 d-flex">
+                        <span class="my-auto btn btn-light me-auto text-danger" id="deleteEatery" role="button">Удалить</span>
+                    </div>
+                }
+                <div class="col col-12 mt-4">Описание заведения: &nbsp;<h5 id="profileDescription">@Model.Description</h5></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 card-group mt-3 g-4">
+    @if (@Model.Dishes.Count() == 0 || Model.Dishes == null)
+    {
+        <h5 class="mx-auto"> Блюд в этом заведении пока что нет!</h5>
+    }
+    else
+    {
+        @foreach (var dish in Model.Dishes)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <a asp-action="DishDetails" asp-route-id="@dish.Id"><img src="@dish.Avatar" height="250" class="card-img-top"></a>
+                    <div class="card-body">
+                        <h5 class="card-title">Название: &nbsp; <a asp-action="DishDetails" asp-route-id="@dish.Id">@dish.Name</a></h5>
+                        <p class="card-text"><i class="bi bi-blockquote-right text-primary me-2"></i> Описание: &nbsp; @dish.Description</p>
+                        <p class="card-text mt-auto"><i class="far fa-money-bill-alt text-primary me-2"></i> $ @dish.Price</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-warning">В корзину</button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
+
+<div class="modal" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать заведение</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Edit" id="editForm" asp-controller="Eatery" asp-anti-forgery="true"  enctype="multipart/form-data" >
+                <div class="modal-body">
+                    <div class="validation text-danger" asp-validation-summary="ModelOnly"></div>
+                    <div class="input-group mt-4">
+                        <label for="name"><span id="errorTakenName" class="text-danger" ></span></label>
+                        <div class="input-group">
+                            <input asp-for="Name" onkeyup="checkEateryName()" type="text" class="form-control" placeholder="Name" id="name" required="required">
+                        </div>
+                    </div>
+                    <div class="input-group mt-4">
+                        <label for="description"><span class="text-danger"></span></label>
+                        <div class="input-group">
+                            <textarea class="form-control h-100" asp-for="Description" placeholder="Description" id="description" type="text" rows="4" required="required"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="file">Выберите фото заведения</label>
+                        <input id="file" type="file" name="uploadedFile" class="form-control">
+                    </div>
+                    <input type="hidden" name="eateryId" value="@Model.Id"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Редактировать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts
+{
+    <script>
+       
+    
+        function checkEateryName() {
+            let valueName = $('#name').val();
+            let name = document.querySelector('input[id=name]');
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("EditCheckEateryName", "Validation")',
+                contentType: 'application/json;charset=utf-8',
+                dataType: 'json',
+                data: { 'name': valueName, 'id': @Model.Id },
+                success: function(result) {
+                    if (!result) {
+                        $('#errorTakenName').text(valueName + ' уже занят!');
+                        name.setCustomValidity(valueName + ' уже занят!');
+                    } else {
+                        $('#errorTakenName').text('');
+                        name.setCustomValidity('');
+                    }
+                }
+            });
+        }
+    
+        
+        $(document).ready(function() {
+                      
+            $('#deleteEatery').click(function(e) {
+                            e.preventDefault();
+                            let eateryId = @Model.Id;
+                            let deleteConfirm = confirm('Вы уверены что хотите удалить заведение ' + '@Model.Name' + ' ?');
+                            if (deleteConfirm) {
+                                $.ajax({
+                                    url: '@Url.Action("Delete", "Eatery")',
+                                    type: 'POST',
+                                    data: { 'id': eateryId },
+                                    success: function(response) {
+                                        if (response) {
+                                            $('#profile').empty().html(`
+                                                <h4 class="text-danger"> Заведение ${ '@Model.Name' } было удалено!</h4>
+                                            `);
+                                        } else {
+                                            alert('Произошла ошибка при удалении заведения!');
+                                        }
+                                    }
+                                });
+                            }
+                        });
+            
+            
+            $('#edit').click(function(e) {
+                e.preventDefault();
+                $('#editModal').modal('show');
+            });
+    
+            $('#editForm').submit(function(event) {
+                event.preventDefault();
+                let form = $('#editForm')[0];
+                let formData = new FormData(form);
+                $.ajax({
+                    url: '@Url.Action("Edit", "Eatery")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response) {
+                            $('#profileName').text(response.name);
+                            $('#profileDescription').text(response.description);
+                            $('#profileAvatar').attr('src', response.avatar);
+                        } else {
+                            alert('Ошибка: при редактировании заведения');
+                        }
+                    },
+                    error: function() {
+                        alert('Произошла ошибка при отправке данных');
+                    }
+                });
+            });
+        });
+    </script>
+}

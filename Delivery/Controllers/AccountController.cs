@@ -47,6 +47,8 @@ public class AccountController : Controller
         return NotFound();
     }
 
+    [HttpPost]
+    [Authorize]
     public async Task<IActionResult> Edit(User model, IFormFile? uploadedFile, int userId, string? password)
     {
         User? user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
