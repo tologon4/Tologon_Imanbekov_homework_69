@@ -10,6 +10,7 @@ public class DeliveryDb : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Eatery> Eateries { get; set; }
     public DbSet<Dish> Dishes { get; set; }
     public DbSet<Basket> Baskets { get; set; }
+    public DbSet<Order> Orders { get; set; }
     
     
     public DeliveryDb(DbContextOptions<DeliveryDb> options) : base(options){}

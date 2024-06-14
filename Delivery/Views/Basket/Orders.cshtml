@@ -1,0 +1,40 @@
+@model List<Order>
+
+@{
+    ViewBag.Title = "title";
+    Layout = "_Layout";
+}
+
+@if (Model.Count() == 0 || Model == null)
+{
+    <h5 class="mx-auto">Заказов еще не сделано! </h5>
+}
+else
+{
+    @foreach (var order in Model)
+    {
+        <div class="job-item border-success shadow p-4 mt-4">
+            <div class="row g-4">
+                <div class="col-sm-12 col-md-8 d-flex align-items-center">
+                    <h5 class="mb-3">Номер заказа: &nbsp; @order.Id</h5>
+                    <div class="text-start ps-4">
+                        <h5 class="mb-3">Номер телефона: &nbsp; @order.PhoneNumber</h5>
+                        <h5 class="mb-3">Адрес отправки заказа: &nbsp; @order.Address</h5>
+                        <h5 class="mb-3">Название заведения: &nbsp; @order.Basket.Eatery.Name</h5>
+                        <p> Блюда заказанные</p>
+                        @foreach (var dish in @order.Basket.Dishes)
+                        {
+                            <p>@dish.Name</p>
+                        }
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-4 d-flex flex-column align-items-start align-items-md-end justify-content-center">
+                    <div class="d-flex mb-3 text-end">
+                        <h5 class="mb-3"><i class="far fa-money-bill-alt text-primary me-2"></i>Общая стоимость: &nbsp; @order.Basket.TotalPrice KGS</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    
+}

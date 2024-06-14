@@ -27,10 +27,13 @@
                 <ul class="navbar-nav flex-grow-1">
                     @if (User.Identity.IsAuthenticated)
                     {
+                        <li class="nav-item ms-auto">
+                            <a class="nav-link text-success" asp-action="Index" asp-controller="Eatery">Все заведения</a>
+                        </li>
                         @if (User.IsInRole("manager") || User.IsInRole("admin"))
                         {
                             <li class="nav-item ms-auto">
-                                <a class="nav-link text-success" asp-action="Index" asp-controller="Eatery">Все заведения</a>
+                                <a class="nav-link text-success" asp-action="Orders" asp-controller="Basket">Все заказы</a>
                             </li>
                             <li class="nav-item ms-auto">
                                 <a class="btn btn-light border-1 border-primary rounded-3 text-primary" asp-action="CreateEatery" asp-controller="Admin">Создать заведение</a>
@@ -46,8 +49,12 @@
                             <form method="post" asp-controller="Account" asp-action="LogOut"><input type="submit" value="Выход" class="btn btn-light border-1 border-primary rounded-3 order-1 text-primary"/></form>
                         </li>
                         <li class="nav-item me-3">
-                            <a class=" ms-3" asp-action="Profile" asp-controller="Account" asp-route-id=""><i class="bi bi-person-circle fs-3"></i></a>
+                            <a class=" ms-4" asp-action="Profile" asp-controller="Account" asp-route-id=""><i class="bi bi-person-circle fs-3"></i></a>
                         </li>
+                        <li class="nav-item me-3">
+                            <a class=" ms-3" asp-action="OwnOrders" asp-controller="Basket" asp-route-id=""><i class="bi bi-cart4 text-success fs-3"></i></a>
+                        </li>
+                        
                         
                     }
                     else

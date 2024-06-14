@@ -31,32 +31,82 @@
     </div>
 </div>
 
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 card-group mt-3 g-4">
-    @if (@Model.Dishes.Count() == 0 || Model.Dishes == null)
-    {
-        <h5 class="mx-auto"> Блюд в этом заведении пока что нет!</h5>
-    }
-    else
-    {
-        @foreach (var dish in Model.Dishes)
-        {
-            <div class="col">
-                <div class="card h-100">
-                    <a asp-action="DishDetails" asp-route-id="@dish.Id"><img src="@dish.Avatar" height="250" class="card-img-top"></a>
-                    <div class="card-body">
-                        <h5 class="card-title">Название: &nbsp; <a asp-action="DishDetails" asp-route-id="@dish.Id">@dish.Name</a></h5>
-                        <p class="card-text"><i class="bi bi-blockquote-right text-primary me-2"></i> Описание: &nbsp; @dish.Description</p>
-                        <p class="card-text mt-auto"><i class="far fa-money-bill-alt text-primary me-2"></i> $ @dish.Price</p>
+<div class="row row-cols-2">
+    <div class="col col-8">
+        <div class="row row-cols-1 card-group mt-3 g-4">
+            @if (@Model.Dishes.Count() == 0 || Model.Dishes == null)
+            {
+                <h5 class="mx-auto"> Блюд в этом заведении пока что нет!</h5>
+            }
+            else
+            {
+                @foreach (var dish in Model.Dishes)
+                {
+                    <div class="job-item border-success shadow p-4 mt-4">
+                        <div class="row g-4">
+                            <div class="col-sm-12 col-md-8 d-flex align-items-center">
+                                <a asp-action="DishDetails" asp-route-id="@dish.Id">
+                                    <img class="flex-shrink-0 img-fluid border rounded-3" src="@dish.Avatar" alt="" style="width: 100px; height: 100px;">
+                                </a>
+                                <div class="text-start ps-4">
+                                    <h5 class="card-title"><a asp-action="DishDetails" asp-route-id="@dish.Id" class="nav-link text-dark">@dish.Name</a></h5>
+                                    <p class="card-text"><i class="bi bi-blockquote-right text-primary me-2"></i> Описание: &nbsp; @dish.Description</p>
+                                    <p class="card-text mt-auto"><i class="far fa-money-bill-alt text-primary me-2"></i> $ @dish.Price</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-4 d-flex flex-column align-items-start align-items-md-end justify-content-center">
+                                <div class="d-flex mb-3">
+                                    <button class="btn btn-warning mt-auto toBasket" data-dishId="@dish.Id" data-dishName="@dish.Name" data-dishPrice="@dish.Price">В корзину</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-footer">
-                        <button class="btn btn-warning">В корзину</button>
-                    </div>
-                </div>
+                }
+            }
+        </div>
+    </div>
+    <div class="col col-4 mt-5">
+        <form id="orderForm">
+            <div class="order-shops text-center border sticky-top mt-5 py-5 px-3" style="height: 550px; overflow-y: auto;">
+
+                
             </div>
-        }
-    }
+            <div class="text-center border w-100 mx-auto">
+                <button type="submit" class="btn btn-success mx-auto mt-3" id="order" style="display: none">Order</button>
+            </div>
+        </form>
+    </div>
 </div>
 
+
+<div class="modal" id="orderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Введите данные для заказа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="orderForm2" asp-action="Order" asp-controller="Basket" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Номер телефона</label>
+                        <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Адрес доставки</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+                    </div>
+                </div>
+                <input type="hidden" value="" name="dishes" id="basketObjs"/>
+                <input type="hidden" value="@Model.Id" name="eateryId" />
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Подтвердить заказ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 
 <div class="modal" id="editModal" tabindex="-1">
@@ -124,9 +174,127 @@
             });
         }
     
+        function addQuantityButtonListeners(quantityDiv) {
+                    var plusBtn = quantityDiv.querySelector('.plus-btn');
+                    var minusBtn = quantityDiv.querySelector('.minus-btn');
+                    var input = quantityDiv.querySelector('input[name="quantity"]');
+                    var priceElement = quantityDiv.querySelector('.dish-price');
+                    var originalPrice = parseFloat(priceElement.getAttribute('data-original-price'));
         
+                    plusBtn.addEventListener('click', function () {
+                        var currentQuantity = parseInt(input.value);
+                        input.value = currentQuantity + 1;
+                        priceElement.textContent = `${(originalPrice * (currentQuantity + 1)).toFixed(2)}`;
+                    });
+        
+                    minusBtn.addEventListener('click', function () {
+                        var currentQuantity = parseInt(input.value);
+                        if (currentQuantity > 1) {
+                            input.value = currentQuantity - 1;
+                            priceElement.textContent = `${(originalPrice * (currentQuantity - 1)).toFixed(2)}`;
+                        } else {
+                            quantityDiv.remove();
+                            checkOrderButtonVisibility();
+                        }
+                    });
+        
+                    input.addEventListener('input', function () {
+                        var newQuantity = parseInt(input.value);
+                        if (isNaN(newQuantity) || newQuantity < 1) {
+                            input.value = 1;
+                            newQuantity = 1;
+                        }
+                        priceElement.textContent = `${(originalPrice * newQuantity).toFixed(2)}`;
+                    });
+                    
+                }
+        
+        function checkOrderButtonVisibility() {
+            var orderForm = $('#orderForm');
+            var orderButton = orderForm.find('#order');
+            var orderShops = orderForm.find('.order-shops');
+        
+            if (orderShops.children().length > 0) {
+                orderButton.show();
+            } else {
+                orderButton.hide();
+            }
+        }
+                
         $(document).ready(function() {
-                      
+            
+            
+            checkOrderButtonVisibility();
+            
+            document.getElementById('orderForm').addEventListener('submit', function(event) {
+                    event.preventDefault(); 
+                    $('#orderModal').modal('show');
+                                basketObjs = [];
+                                $('.order-shops .quantity').each(function() {
+                                    const dishId = $(this).attr('data-dishid');
+                                    const dishName = $(this).find('h6').text().trim();
+                                    const price = parseFloat($(this).find('.dish-price').text().trim());
+                                    const quantity = parseInt($(this).find('input[name="quantity"]').val());
+                    
+                                    basketObjs.push({
+                                        dishId: dishId,
+                                        dishName: dishName,
+                                        price: price,
+                                        quantity: quantity
+                                    });
+                                });
+                    $('#basketObjs').val(JSON.stringify(basketObjs));
+                   
+                    
+                });
+           
+            
+            document.querySelectorAll('.toBasket').forEach(button => {
+                        button.addEventListener('click', function () {
+                            var dishId = this.getAttribute('data-dishId');
+                            var dishName = this.getAttribute('data-dishName');
+                            var dishPrice = parseFloat(this.getAttribute('data-dishPrice'));
+            
+                            var existingQuantityDiv = document.querySelector(`.quantity[data-dishId='${dishId}']`);
+            
+                            if (existingQuantityDiv) {
+                                var input = existingQuantityDiv.querySelector('input[name="quantity"]');
+                                var currentQuantity = parseInt(input.value);
+                                input.value = currentQuantity + 1;
+            
+                                var priceElement = existingQuantityDiv.querySelector('.dish-price');
+                                var currentPrice = parseFloat(priceElement.getAttribute('data-original-price'));
+                                priceElement.textContent = `${(currentPrice * (currentQuantity + 1)).toFixed(2)}`;
+                            } else {
+                                var quantityDiv = document.createElement('div');
+                                quantityDiv.classList.add('quantity', 'mb-3', 'p-2', 'border', 'rounded');
+                                quantityDiv.setAttribute('data-dishId', dishId);
+            
+                                quantityDiv.innerHTML = `
+                                    <h6>${dishName}</h6>
+                                    <p>Цена: <span class="dish-price" data-original-price="${dishPrice}">${dishPrice.toFixed(2)}</span> KGS</p>
+                                    <div class="d-flex ">
+                                        <span class="minus-btn ms-auto me-2" role="button">
+                                            <i class="bi bi-dash-square fs-3"></i>
+                                        </span>
+                                        <input type="number" class="form-control w-25 text-center" name="quantity" value="1" min="1">
+                                        <span class="plus-btn ms-2 me-auto" role="button">
+                                            <i class="bi bi-plus-square fs-3"></i>
+                                        </span>
+                                    </div>
+                                `;
+            
+                                document.querySelector('.order-shops').appendChild(quantityDiv);
+            
+                                addQuantityButtonListeners(quantityDiv);
+                            }
+                            checkOrderButtonVisibility();
+                        });
+                    });
+            
+           
+            
+                                 
             $('#deleteEatery').click(function(e) {
                             e.preventDefault();
                             let eateryId = @Model.Id;

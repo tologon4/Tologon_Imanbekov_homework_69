@@ -142,15 +142,15 @@ public class EateryController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         Eatery? eatery = await _db.Eateries.Include(d => d.Dishes).FirstOrDefaultAsync(e => e.Id == id);
-        if (eatery!=null)
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (eatery!=null && currentUser!=null)
         {
-            var currentUser = await _userManager.GetUserAsync(User);
             var isAdminUser = await _userManager.IsInRoleAsync(currentUser, "admin") 
                               || await _userManager.IsInRoleAsync(currentUser, "manager");
             ViewBag.EditDeleteAccess = isAdminUser;
             return View(eatery);
         }
-        return NotFound();
+        return RedirectToAction("Login", "Account");
     }
 
     [Authorize]
